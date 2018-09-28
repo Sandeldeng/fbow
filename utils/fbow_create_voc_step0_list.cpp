@@ -1,4 +1,3 @@
-
 //First step of creating a vocabulary is extracting features from a set of images. We save them to a file for next step
 #include <iostream>
 #include <fstream>
@@ -19,7 +18,31 @@ using namespace std;
 
 
 //command line parser
-class CmdLineParser{int argc; char **argv; public: CmdLineParser(int _argc,char **_argv):argc(_argc),argv(_argv){}  bool operator[] ( string param ) {int idx=-1;  for ( int i=0; i<argc && idx==-1; i++ ) if ( string ( argv[i] ) ==param ) idx=i;    return ( idx!=-1 ) ;    } string operator()(string param,string defvalue="-1"){int idx=-1;    for ( int i=0; i<argc && idx==-1; i++ ) if ( string ( argv[i] ) ==param ) idx=i; if ( idx==-1 ) return defvalue;   else  return ( argv[  idx+1] ); }};
+class CmdLineParser
+{
+    int argc; 
+    char **argv; 
+public: 
+    CmdLineParser(int _argc,char **_argv):argc(_argc),argv(_argv){} 
+    bool operator[] ( string param )
+    {
+        int idx=-1;  
+        for ( int i=0; i<argc && idx==-1; i++ ) 
+        if ( string ( argv[i] ) ==param )
+            idx=i;    
+        return ( idx!=-1 ) ;
+    }
+    string operator()(string param,string defvalue="-1")
+    {
+        int idx=-1;
+        for ( int i=0; i<argc && idx==-1; i++ ) 
+            if ( string ( argv[i] ) ==param ) idx=i; 
+        if ( idx==-1 ) 
+            return defvalue;
+        else  
+            return ( argv[  idx+1] );
+    }
+};
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -32,7 +55,8 @@ void wait()
 }
 
 
-vector<string> readImagePathsFromFile(char * txtlist){
+vector<string> readImagePathsFromFile(char * txtlist)
+{
     vector<string> paths;
     // Open file
 	std::ifstream infile(txtlist, std::ios::binary);
@@ -51,24 +75,29 @@ vector<string> readImagePathsFromFile(char * txtlist){
     return paths;
 }
 
-vector< cv::Mat  >  loadFeatures( std::vector<string> path_to_images,string descriptor="") throw (std::exception){
+vector< cv::Mat >  loadFeatures( std::vector<string> path_to_images,string descriptor="") throw (std::exception)
+{
     //select detector
     cv::Ptr<cv::Feature2D> fdetector;
-    if (descriptor=="orb")        fdetector=cv::ORB::create(2000);
-    else if (descriptor=="brisk") fdetector=cv::BRISK::create();
+    if (descriptor=="orb")        
+        fdetector=cv::ORB::create(2000);
+    else if (descriptor=="brisk") 
+        fdetector=cv::BRISK::create();
 #ifdef OPENCV_VERSION_3
-    else if (descriptor=="akaze") fdetector=cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB,  0,  3, 1e-4);
+    else if (descriptor=="akaze") 
+        fdetector=cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB,  0,  3, 1e-4);
 #endif
 #ifdef USE_CONTRIB
-    else if(descriptor=="surf" )  fdetector=cv::xfeatures2d::SURF::create(15, 4, 2);
+    else if(descriptor=="surf" )  
+        fdetector=cv::xfeatures2d::SURF::create(15, 4, 2);
 #endif
 
     else throw std::runtime_error("Invalid descriptor");
     assert(!descriptor.empty());
-    vector<cv::Mat>    features;
+    vector<cv::Mat> features;
 
 
-    cout << "Extracting   features..." << endl;
+    cout << "Extracting features..." << endl;
     for(size_t i = 0; i < path_to_images.size(); ++i)
     {
         vector<cv::KeyPoint> keypoints;
@@ -85,16 +114,21 @@ vector< cv::Mat  >  loadFeatures( std::vector<string> path_to_images,string desc
 }
 
 // ----------------------------------------------------------------------------
-void saveToFile(string filename,const vector<cv::Mat> &features,  std::string  desc_name,bool rewrite =true)throw (std::exception){
-
+void saveToFile(string filename,const vector<cv::Mat> &features,  std::string  desc_name,bool rewrite =true)throw (std::exception)
+{
     //test it is not created
-    if (!rewrite){
+    if (!rewrite)
+    {
         std::fstream ifile(filename);
         if (ifile.is_open())//read size and rewrite
             std::runtime_error( "ERROR::: Output File "+filename+" already exists!!!!!" );
     }
 	std::ofstream ofile(filename, std::ios::binary);
-    if (!ofile.is_open()){cerr<<"could not open output file"<<endl;exit(0);}
+    if (!ofile.is_open())
+    {
+        cerr<<"could not open output file"<<endl;
+        exit(0);
+    }
 
     char _desc_name[20];
     desc_name.resize(min(size_t(19),desc_name.size()));
@@ -103,13 +137,18 @@ void saveToFile(string filename,const vector<cv::Mat> &features,  std::string  d
 
     uint32_t size=features.size();
     ofile.write((char*)&size,sizeof(size));
-    for(auto &f:features){
-        if( !f.isContinuous()){
+    for(auto &f:features)
+    {
+        if( !f.isContinuous())
+        {
             cerr<<"Matrices should be continuous"<<endl;exit(0);
         }
-        uint32_t aux=f.cols; ofile.write( (char*)&aux,sizeof(aux));
-        aux=f.rows; ofile.write( (char*)&aux,sizeof(aux));
-        aux=f.type(); ofile.write( (char*)&aux,sizeof(aux));
+        uint32_t aux=f.cols; 
+        ofile.write( (char*)&aux,sizeof(aux));
+        aux=f.rows; 
+        ofile.write( (char*)&aux,sizeof(aux));
+        aux=f.type(); 
+        ofile.write( (char*)&aux,sizeof(aux));
         ofile.write( (char*)f.ptr<uchar>(0),f.total()*f.elemSize());
     }
 }
@@ -119,7 +158,8 @@ void saveToFile(string filename,const vector<cv::Mat> &features,  std::string  d
 int main(int argc,char **argv)
 {
 
-    try{
+    try
+    {
         CmdLineParser cml(argc,argv);
         if (cml["-h"] || argc==1){
             cerr<<"Usage:  descriptor_name output txtlist \n\t descriptors:brisk,surf,orb(default),akaze(only if using opencv 3)"<<endl;
@@ -130,12 +170,14 @@ int main(int argc,char **argv)
         string output=argv[2];
 
         auto images=readImagePathsFromFile(argv[3]);
-        vector< cv::Mat   >   features= loadFeatures(images,descriptor);
+        vector< cv::Mat > features = loadFeatures(images,descriptor);
 
         //save features to file
         saveToFile(argv[2],features,descriptor);
 
-    }catch(std::exception &ex){
+    }
+    catch(std::exception &ex)
+    {
         cerr<<ex.what()<<endl;
     }
 

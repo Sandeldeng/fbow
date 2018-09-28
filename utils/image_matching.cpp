@@ -15,23 +15,51 @@ using namespace std;
 
 
 #include <chrono>
-class CmdLineParser { int argc; char **argv; public: CmdLineParser(int _argc, char **_argv) :argc(_argc), argv(_argv) {}  bool operator[] (string param) { int idx = -1;  for (int i = 0; i<argc && idx == -1; i++) if (string(argv[i]) == param) idx = i;    return (idx != -1); } string operator()(string param, string defvalue = "-1") { int idx = -1;    for (int i = 0; i<argc && idx == -1; i++) if (string(argv[i]) == param) idx = i; if (idx == -1) return defvalue;   else  return (argv[idx + 1]); } };
+class CmdLineParser
+{ 
+    int argc; 
+    char **argv; 
+public: 
+    CmdLineParser(int _argc, char **_argv) :argc(_argc), argv(_argv) {}  
+    bool operator[] (string param) 
+    { 
+        int idx = -1;  
+        for (int i = 0; i<argc && idx == -1; i++) 
+            if (string(argv[i]) == param) idx = i;    
+        return (idx != -1);
+    }
+    string operator()(string param, string defvalue = "-1") 
+    { 
+        int idx = -1;    
+        for (int i = 0; i<argc && idx == -1; i++) 
+            if (string(argv[i]) == param) idx = i; 
+        if (idx == -1) 
+            return defvalue;   
+        else  
+            return (argv[idx + 1]); 
+    } 
+};
 
-vector< cv::Mat  >  loadFeatures(std::vector<string> path_to_images, string descriptor = "") throw (std::exception) {
+vector< cv::Mat > loadFeatures(std::vector<string> path_to_images, string descriptor = "") throw (std::exception) 
+{
     //select detector
     cv::Ptr<cv::Feature2D> fdetector;
-    if (descriptor == "orb")        fdetector = cv::ORB::create(2000);
-    else if (descriptor == "brisk") fdetector = cv::BRISK::create();
+    if (descriptor == "orb")        
+        fdetector = cv::ORB::create(2000);
+    else if (descriptor == "brisk") 
+        fdetector = cv::BRISK::create();
 #ifdef OPENCV_VERSION_3
-    else if (descriptor == "akaze") fdetector = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, 1e-4);
+    else if (descriptor == "akaze") 
+        fdetector = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, 1e-4);
 #endif
 #ifdef USE_CONTRIB
-    else if (descriptor == "surf")  fdetector = cv::xfeatures2d::SURF::create(15, 4, 2);
+    else if (descriptor == "surf")  
+        fdetector = cv::xfeatures2d::SURF::create(15, 4, 2);
 #endif
 
     else throw std::runtime_error("Invalid descriptor");
     assert(!descriptor.empty());
-    vector<cv::Mat>    features;
+    vector<cv::Mat> features;
 
 
     cout << "Extracting   features..." << endl;
@@ -50,7 +78,8 @@ vector< cv::Mat  >  loadFeatures(std::vector<string> path_to_images, string desc
     return features;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
+{
     CmdLineParser cml(argc, argv);
     try {
         if (argc<3 || cml["-h"]) throw std::runtime_error("Usage: fbow   image [descriptor]");
